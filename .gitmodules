@@ -1,0 +1,3 @@
+[submodule "Flux/FluxGTK"]
+	path = Flux/FluxGTK
+	url = https://github.com/FinnTheTurkey/FluxGTK.git
