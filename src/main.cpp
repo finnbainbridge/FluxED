@@ -37,6 +37,7 @@ void init(int argc, char *argv[])
     auto app =
         Gtk::Application::create(argc, argv,
             "org.flux.fluxed");
+    
 
     auto refBuilder = Gtk::Builder::create();
     try
