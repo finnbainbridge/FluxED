@@ -1,3 +1,18 @@
 [submodule "Flux/FluxGTK"]
 	path = Flux/FluxGTK
 	url = https://github.com/FinnTheTurkey/FluxGTK.git
+[submodule "ThirdParty/assimp"]
+	path = ThirdParty/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "ThirdParty/lz4"]
+	path = ThirdParty/lz4
+	url = https://github.com/lz4/lz4.git
+[submodule "ThirdParty/json"]
+	path = ThirdParty/json
+	url = https://github.com/nlohmann/json.git
+[submodule "ThirdParty/nlohmann_json_cmake_fetchcontent"]
+	path = ThirdParty/nlohmann_json_cmake_fetchcontent
+	url = https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent.git
+[submodule "Flux/FluxArc"]
+	path = Flux/FluxArc
+	url = https://github.com/FinnTheTurkey/FluxArc.git
