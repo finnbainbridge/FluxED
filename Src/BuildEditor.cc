@@ -128,6 +128,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending) {
 
 void BuildEditor::openProject()
 {
+    // TODO: Use native dialogs
     Gtk::FileChooserDialog dialog("Open a project file",
           Gtk::FILE_CHOOSER_ACTION_OPEN);
     // dialog.set_do_overwrite_confirmation(true);

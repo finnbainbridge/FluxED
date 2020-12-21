@@ -13,7 +13,7 @@ using namespace FluxProj;
 using json = nlohmann::json;
 
 // std::map<std::string, int> Project::thing = std::map<std::string, int>();
-std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path)> FluxProj::extensions = std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path)>();
+// std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path, bool)> FluxProj::extensions = std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path, bool)>();
 
 Project::Project()
 {
@@ -129,8 +129,20 @@ void Project::runBuild(bool clean, bool release)
 {
     LOG_INFO("Starting build:");
 
+    // TODO: Remove
+    release = true;
+
     // Check FluxCache
-    FluxArc::Archive arc(base_dir / ".fluxproj_cache");
+    FluxArc::Archive arc;
+    try
+    {
+        arc = FluxArc::Archive(base_dir / ".fluxproj_cache");
+    }
+    catch (std::exception e)
+    {
+        remove(base_dir / ".fluxproj_cache");
+        arc = FluxArc::Archive(base_dir / ".fluxproj_cache");
+    }
 
     if (arc.hasFile("--properties--"))
     {
@@ -199,7 +211,7 @@ void Project::runBuild(bool clean, bool release)
                 continue;
             }
 
-            bool result = extensions[i.input.extension()](base_dir / i.input, base_dir / i.output);
+            bool result = extensions[i.input.extension()](base_dir / i.input, base_dir / i.output, release);
             
             if (result)
             {

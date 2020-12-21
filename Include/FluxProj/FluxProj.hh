@@ -17,10 +17,10 @@ namespace FluxProj
         bool active = false;
     };
 
-    extern std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path)> extensions;
+    inline std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path, bool)> extensions;
 
     /* Register a handler for loading a file type. Takes the extension, including the . */
-    inline bool addExtension(std::string ext, bool(*function)(std::filesystem::path, std::filesystem::path))
+    inline bool addExtension(std::string ext, bool(*function)(std::filesystem::path, std::filesystem::path, bool))
     {
         extensions[ext] = function;
         return true;

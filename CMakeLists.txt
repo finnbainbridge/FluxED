@@ -19,8 +19,15 @@ add_executable(FluxED Src/main.cc
 Include/FluxED/FluxEd.hh 
 Include/FluxProj/FluxProj.hh 
 Src/BuildEditor.cc Src/Editor3D.cc
-
+Src/Importers/AssimpImporter.cc
 Src/FluxProj/Project.cc)
+
+set(FLUX_GCC_PROFILE ON)
+
+if (FLUX_GCC_PROFILE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+endif()
 
 add_subdirectory(Flux/FluxGTK)
 target_link_libraries(FluxED PUBLIC FluxGTK)
@@ -28,9 +35,10 @@ target_link_libraries(FluxED PUBLIC FluxGTK)
 target_include_directories(FluxED PUBLIC Include)
 target_include_directories(FluxED PUBLIC Include/FluxProj)
 
-set(ASSIMP_NO_EXPORT OFF)
-set(ASSIMP_BUILD_TESTS OFF)
-set(ASSIMP_INSTALL OFF)
+# Apparently, no export breaks assimp
+set(ASSIMP_NO_EXPORT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/assimp)
 target_link_libraries(FluxED PUBLIC assimp)
 
@@ -41,3 +49,16 @@ target_link_libraries(FluxED PUBLIC nlohmann_json)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+# ============================================================
+# Playground
+# ============================================================
+# Big hack
+add_executable(FluxPlayground Src/Playground/Playground.cc Flux/FluxGTK/FluxEngine/Src/OpenGL/GLFW/GLFW.cc)
+# GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(Flux/FluxGTK/FluxEngine/ThirdParty/glfw)
+target_link_libraries(FluxPlayground PUBLIC glfw)
+target_link_libraries(FluxPlayground PUBLIC FluxEngine)
