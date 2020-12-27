@@ -22,7 +22,7 @@ Src/BuildEditor.cc Src/Editor3D.cc
 Src/Importers/AssimpImporter.cc
 Src/FluxProj/Project.cc)
 
-set(FLUX_GCC_PROFILE ON)
+set(FLUX_GCC_PROFILE OFF)
 
 if (FLUX_GCC_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")

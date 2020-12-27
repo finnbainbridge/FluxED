@@ -83,6 +83,9 @@ BuildEditor::BuildEditor(int argc, char *argv[])
 
     refBuilder->get_widget("MenuRemove", menu);
     menu->signal_activate().connect(sigc::mem_fun(*this, &BuildEditor::removeFile));
+
+    refBuilder->get_widget("MenuRebuild", menu);
+    menu->signal_activate().connect(sigc::mem_fun(*this, &BuildEditor::rebuildProject));
     
 
     // Stores and Trees
@@ -116,6 +119,11 @@ void BuildEditor::updateFiles()
 // ===========================================================
 // Menu stuff
 // ===========================================================
+
+void BuildEditor::rebuildProject()
+{
+    proj.runBuild(true);
+}
 
 // Thanks Stack Overflow: https://stackoverflow.com/a/874160/7179625
 bool hasEnding (std::string const &fullString, std::string const &ending) {

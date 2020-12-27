@@ -70,7 +70,7 @@ void init(int argc, char** argv) {
 
     camera.addComponent<Flux::Transform::TransformCom>(tc);
     Flux::Transform::setCamera(camera);
-    auto o = glm::vec3(0,0,10);
+    auto o = glm::vec3(0,0,3.5);
     Flux::Transform::translate(camera, o);
     LOG_INFO("Setup camera");
 
@@ -93,7 +93,8 @@ void init(int argc, char** argv) {
     // FluxArc::Archive arc("test.farc");
     // ser.save(arc, true);
 
-    Flux::Resources::Deserializer s("assets/backpack.farc");
+    // Flux::Resources::Deserializer s("assets/backpack.farc");
+    Flux::Resources::Deserializer s("assets/GreenV2.1.farc");
     s.addToECS(&ctx);
 }
 

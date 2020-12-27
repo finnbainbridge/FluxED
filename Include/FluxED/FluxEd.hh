@@ -52,6 +52,8 @@ namespace FluxED
 
         void removeFile();
 
+        void rebuildProject();
+
     private:
         // GTK stuff
         Glib::RefPtr<Gtk::Application> app;

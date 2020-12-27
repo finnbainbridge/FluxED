@@ -17,6 +17,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 static std::vector<Flux::Resources::ResourceRef<Flux::Resources::Resource>> resources;
+static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes>> materials;
 static Flux::ECSCtx ctx;
 static std::map<std::string, Flux::Resources::ResourceRef<Flux::Resources::Resource>> mesh_ids;
 
@@ -87,6 +88,34 @@ bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool 
     return true;
 }
 
+bool processMaterials(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
+{
+    // TODO: Don't hard code this
+    // TODO: Even more. 
+    auto shaders_res = Flux::Renderer::createShaderResource("./shaders/vertex.vert", "./shaders/fragment.frag");
+    // auto mat_res = Flux::Renderer::createMaterialResource(shaders_res);
+
+    for (int i = 0; i < scene->mNumMaterials; i++)
+    {
+        auto mat = scene->mMaterials[i];
+        aiColor3D color (0.f,0.f,0.f);
+        
+        if (mat->Get(AI_MATKEY_COLOR_DIFFUSE,color) != aiReturn_SUCCESS)
+        {
+            // Error. We don't really care, though, since the color will
+            // still be black
+        }
+
+        auto mat_res = Flux::Renderer::createMaterialResource(shaders_res);
+        Flux::Renderer::setUniform(mat_res, "color", glm::vec3(color.r, color.g, color.b));
+
+        ser.addResource(mat_res.getBaseEntity());
+        materials.push_back(mat_res);
+    }
+
+    return true;
+}
+
 struct ToProcess
 {
     aiNode* node;
@@ -101,10 +130,6 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
     f->has_parent = false;
     e.addComponent(f);
     nodes.emplace(ToProcess {scene->mRootNode, e});
-
-    // TODO: Don't hard code this
-    auto shaders_res = Flux::Renderer::createShaderResource("./shaders/vertex.vert", "./shaders/fragment.frag");
-    auto mat_res = Flux::Renderer::createMaterialResource(shaders_res);
 
     while (nodes.size() != 0)
     {
@@ -149,12 +174,12 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
             for (int i = 0; i < node->mNumMeshes; i++)
             {
                 auto mesh = scene->mMeshes[node->mMeshes[i]];
+                auto mat = materials[mesh->mMaterialIndex];
                 auto resource = mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)];
 
                 auto new_entity = ctx.createEntity();
 
-                // TODO: Materials
-                Flux::Renderer::addMesh(new_entity, resource, mat_res);
+                Flux::Renderer::addMesh(new_entity, resource, mat);
 
                 Flux::Transform::setParent(new_entity, entity);
                 ser.addEntity(new_entity);
@@ -196,6 +221,10 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     // Load Meshes into archive
     Flux::Resources::Serializer ser;
     processMeshes(ser, scene, release);
+
+    // Load Materials
+    materials = std::vector<Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes>>();
+    processMaterials(ser, scene, release);
 
     // Create scene
     createScene(ser, scene, release);
