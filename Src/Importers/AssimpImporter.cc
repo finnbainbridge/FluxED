@@ -3,6 +3,7 @@
 #include "Flux/Resources.hh"
 #include "FluxArc/FluxArc.hh"
 #include "FluxProj/FluxProj.hh"
+#include <cstring>
 #include <filesystem>
 
 #include <assimp/matrix4x4.h>
@@ -20,6 +21,9 @@ static std::vector<Flux::Resources::ResourceRef<Flux::Resources::Resource>> reso
 static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes>> materials;
 static Flux::ECSCtx ctx;
 static std::map<std::string, Flux::Resources::ResourceRef<Flux::Resources::Resource>> mesh_ids;
+
+static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::TextureRes>> internal_textures;
+static std::map<std::string, Flux::Resources::ResourceRef<Flux::Renderer::TextureRes>> external_textures;
 
 bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
 {
@@ -88,8 +92,37 @@ bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool 
     return true;
 }
 
-bool processMaterials(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
+bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
 {
+    // Finding textures
+    // Internal textures
+    for (int i = 0; i < scene->mNumTextures; i++)
+    {
+        auto tex = scene->mTextures[i];
+        std::vector<aiTexel> pixels(tex->pcData, tex->pcData + tex->mWidth * tex->mHeight);
+        std::vector<aiTexel> flipped_pixels;
+        flipped_pixels.resize(pixels.size());
+
+        for (int i = pixels.size(); i > 0; i -= tex->mWidth)
+        {
+            flipped_pixels.insert(flipped_pixels.end(), pixels.begin() + (i - tex->mWidth), pixels.begin() + i);
+        }
+
+        // Add to resource
+        auto tex_res = new Flux::Renderer::TextureRes;
+        tex_res->width = tex->mWidth;
+        tex_res->height = tex->mHeight;
+
+        tex_res->internal = true;
+        tex_res->image_data_size = sizeof(aiTexel) * flipped_pixels.size();
+        tex_res->image_data = new unsigned char[tex_res->image_data_size];
+        std::memcpy(tex_res->image_data, &flipped_pixels[0], tex_res->image_data_size);
+
+        auto tx_res = Flux::Resources::createResource(tex_res);
+        ser.addResource(tx_res.getBaseEntity());
+        internal_textures.push_back(tx_res);
+    }
+
     // TODO: Don't hard code this
     // TODO: Even more. 
     auto shaders_res = Flux::Renderer::createShaderResource("./shaders/vertex.vert", "./shaders/fragment.frag");
@@ -108,6 +141,67 @@ bool processMaterials(Flux::Resources::Serializer& ser, const aiScene* scene, bo
 
         auto mat_res = Flux::Renderer::createMaterialResource(shaders_res);
         Flux::Renderer::setUniform(mat_res, "color", glm::vec3(color.r, color.g, color.b));
+
+        // Deal with textures
+        // TODO: Multiple textures
+        if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+        {
+            Flux::Renderer::setUniform(mat_res, "has_diffuse", true);
+            aiString path;
+            mat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+            std::string name = path.C_Str();
+            
+            if (name[0] == '*')
+            {
+                // Embeded texture
+                int index = std::stoi(name.substr(1));
+                Flux::Renderer::setUniform(mat_res, "diffuse_texture", internal_textures[index]);
+            }
+            else
+            {
+                // External texture
+                if (external_textures.find(name) == external_textures.end())
+                {
+                    // Create new texture
+                    auto tex_res = new Flux::Renderer::TextureRes;
+                    tex_res->internal = false;
+
+                    std::filesystem::path og = name;
+                    std::filesystem::path new_g;
+                    if (og.is_absolute() == true)
+                    {
+                        // Why do programs do this?
+                        // Move the textures here
+                        if (!std::filesystem::exists(input.parent_path() / (input.filename().string() + "_external_textures")))
+                        {
+                            std::filesystem::create_directory(input.parent_path() / (input.filename().string() + "_external_textures"));
+                        }
+
+                        std::filesystem::copy_file(og, input.parent_path() / (input.filename().string() + "_external_textures") / og.filename());
+                        new_g = input.parent_path() / (input.filename().string() + "_external_textures") / og.filename();
+
+                    }
+                    else
+                    {
+                        // Nice people who use relative paths get
+                        // to keep their own folder structure
+                        new_g = input.parent_path() / og;
+                    }
+
+                    tex_res->loadImage(new_g);
+                    auto tx_res = Flux::Resources::createResource(tex_res);
+                    ser.addResource(tx_res.getBaseEntity());
+
+                    external_textures[name] = tx_res;
+                }
+
+                Flux::Renderer::setUniform(mat_res, "diffuse_texture", external_textures[name]);
+            }
+        }
+        else
+        {
+            Flux::Renderer::setUniform(mat_res, "has_diffuse", false);
+        }
 
         ser.addResource(mat_res.getBaseEntity());
         materials.push_back(mat_res);
@@ -205,6 +299,9 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     const struct aiScene* scene = importer.ReadFile(input, aiProcess_CalcTangentSpace |
                 aiProcess_Triangulate            |
                 aiProcess_JoinIdenticalVertices  |
+                // aiProcess_FlipUVs                |
+                aiProcess_GenNormals             |
+                aiProcess_OptimizeMeshes         | // This may break things
                 aiProcess_SortByPType);
     
     // Make sure it worked
@@ -224,7 +321,9 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
 
     // Load Materials
     materials = std::vector<Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes>>();
-    processMaterials(ser, scene, release);
+    internal_textures.clear();
+    external_textures.clear();
+    processMaterials(input, ser, scene, release);
 
     // Create scene
     createScene(ser, scene, release);
