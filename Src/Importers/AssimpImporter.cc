@@ -19,7 +19,7 @@
 
 static std::vector<Flux::Resources::ResourceRef<Flux::Resources::Resource>> resources;
 static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes>> materials;
-static Flux::ECSCtx ctx;
+static Flux::ECSCtx* ctx = nullptr;
 static std::map<std::string, Flux::Resources::ResourceRef<Flux::Resources::Resource>> mesh_ids;
 
 static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::TextureRes>> internal_textures;
@@ -177,9 +177,14 @@ bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& 
                             std::filesystem::create_directory(input.parent_path() / (input.filename().string() + "_external_textures"));
                         }
 
+                        if (std::filesystem::exists(input.parent_path() / (input.filename().string() + "_external_textures") / og.filename()))
+                        {
+                            // Delete it
+                            std::filesystem::remove(input.parent_path() / (input.filename().string() + "_external_textures") / og.filename());
+                        }
+
                         std::filesystem::copy_file(og, input.parent_path() / (input.filename().string() + "_external_textures") / og.filename());
                         new_g = input.parent_path() / (input.filename().string() + "_external_textures") / og.filename();
-
                     }
                     else
                     {
@@ -188,7 +193,12 @@ bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& 
                         new_g = input.parent_path() / og;
                     }
 
+                    // Use absolute path for loading
                     tex_res->loadImage(new_g);
+                    
+                    // Manually set relative path for saving
+                    // It is relative to the OUTPUT, not the PROJECT
+                    tex_res->filename = std::filesystem::relative(new_g, input.parent_path());
                     auto tx_res = Flux::Resources::createResource(tex_res);
                     ser.addResource(tx_res.getBaseEntity());
 
@@ -219,7 +229,7 @@ struct ToProcess
 void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
 {
     std::queue<ToProcess> nodes;
-    auto e = ctx.createEntity();
+    auto e = ctx->createEntity();
     Flux::Transform::TransformCom* f = new Flux::Transform::TransformCom;
     f->has_parent = false;
     e.addComponent(f);
@@ -271,7 +281,7 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
                 auto mat = materials[mesh->mMaterialIndex];
                 auto resource = mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)];
 
-                auto new_entity = ctx.createEntity();
+                auto new_entity = ctx->createEntity();
 
                 Flux::Renderer::addMesh(new_entity, resource, mat);
 
@@ -282,7 +292,7 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
 
         for (int i = 0; i < node->mNumChildren; i++)
         {
-            auto new_entity = ctx.createEntity();
+            auto new_entity = ctx->createEntity();
             Flux::Transform::TransformCom* f = new Flux::Transform::TransformCom;
             f->has_parent = false;
             new_entity.addComponent(f);
@@ -313,7 +323,7 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
 
     // Create containers
     resources = std::vector<Flux::Resources::ResourceRef<Flux::Resources::Resource>>();
-    ctx = Flux::ECSCtx();
+    ctx = new Flux::ECSCtx();
 
     // Load Meshes into archive
     Flux::Resources::Serializer ser;
@@ -337,7 +347,7 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     {
         Flux::Resources::removeResource(i);
     }
-    ctx.destroyAllEntities();
+    ctx->destroyAllEntities();
 
     return true;
 }

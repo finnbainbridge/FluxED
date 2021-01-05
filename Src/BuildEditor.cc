@@ -93,6 +93,8 @@ BuildEditor::BuildEditor(int argc, char *argv[])
     file_store = Gtk::ListStore::create(columns);
     tree->set_model(file_store);
 
+    tree->signal_row_activated().connect(sigc::mem_fun(*this, &BuildEditor::itemClicked));
+
     tree->append_column("Input File", columns.input_filename);
     tree->append_column("Output File", columns.output_filename);
 
@@ -105,6 +107,11 @@ void BuildEditor::run()
     app->run(*window);
 }
 
+void BuildEditor::loop(float delta)
+{
+    editor->loop(delta);
+}
+
 void BuildEditor::updateFiles()
 {
     // for (auto i: file_items)
@@ -114,6 +121,17 @@ void BuildEditor::updateFiles()
 
     // file_items = std::vector<Gtk::TreeModel::iterator>();
 
+}
+
+// ===========================================================
+// Tree stuff
+// ===========================================================
+
+void BuildEditor::itemClicked(const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column)
+{
+    auto iter = file_store->get_iter(path);
+    std::string out_fname = iter->get_value(columns.output_filename);
+    editor->loadScene(proj.getFolder() / out_fname);
 }
 
 // ===========================================================

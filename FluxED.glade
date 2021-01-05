@@ -527,6 +527,8 @@
                             <property name="visible">True</property>
                             <property name="app-paintable">True</property>
                             <property name="can-focus">False</property>
+                            <property name="has-alpha">True</property>
+                            <property name="has-depth-buffer">True</property>
                           </object>
                         </child>
                       </object>
@@ -548,7 +550,7 @@
                             <property name="vexpand">True</property>
                             <property name="shadow-type">in</property>
                             <child>
-                              <object class="GtkTreeView" id="Entitie">
+                              <object class="GtkTreeView" id="Entity">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="model">Entities</property>

@@ -358,7 +358,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="rebuild">
+                      <object class="GtkMenuItem" id="MenuRebuild">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="tooltip-text" translatable="yes">Runs a fresh rebuild, rebuilding all assets</property>
@@ -548,7 +548,7 @@
                             <property name="vexpand">True</property>
                             <property name="shadow-type">in</property>
                             <child>
-                              <object class="GtkTreeView" id="Entitie">
+                              <object class="GtkTreeView" id="Entity">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="model">Entities</property>

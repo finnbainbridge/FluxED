@@ -17,6 +17,8 @@ namespace FluxProj
         bool active = false;
     };
 
+    class Project;
+
     inline std::unordered_map<std::string, bool(*)(std::filesystem::path, std::filesystem::path, bool)> extensions;
 
     /* Register a handler for loading a file type. Takes the extension, including the . */

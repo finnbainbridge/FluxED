@@ -8,6 +8,8 @@ Terminology:
     Editor3D - The 3D editor for 3d file types. Lives inside BuildEditor
 */
 
+#include "Flux/ECS.hh"
+#include "Flux/Resources.hh"
 #include "glibmm/ustring.h"
 #include "gtkmm/eventbox.h"
 #include "gtkmm/glarea.h"
@@ -17,6 +19,7 @@ Terminology:
 #include "gtkmm/window.h"
 #include "FluxGTK/FluxGTK.hh"
 #include "FluxProj/FluxProj.hh"
+#include <filesystem>
 
 namespace FluxED
 {
@@ -43,6 +46,9 @@ namespace FluxED
         /** Starts the GTK window, and runs the BuildEditor */
         void run();
 
+        /** Gets called every frame */
+        void loop(float delta);
+
         // File IO
         void newProject();
 
@@ -53,6 +59,9 @@ namespace FluxED
         void removeFile();
 
         void rebuildProject();
+
+        // Tree
+        void itemClicked(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 
     private:
         // GTK stuff
@@ -81,6 +90,20 @@ namespace FluxED
     {
         public:
             Editor3D(Gtk::GLArea* glarea, Gtk::EventBox* event_box);
+
+            /** 
+            Load a 3D Scene into the 3D editor.
+            A 3D scene is a file created using the Serializer class.
+            */
+            void loadScene(std::filesystem::path place);
+
+            void loop(float delta);
+
+        private:
+            Flux::ECSCtx* current_scene;
+            Flux::Resources::Deserializer* current_scene_loader;
+            bool has_scene;
+            Gtk::GLArea* glarea;
     };
 }
 
