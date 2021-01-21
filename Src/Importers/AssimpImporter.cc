@@ -15,6 +15,8 @@
 #include <queue>
 
 #include "Flux/Renderer.hh"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 static std::vector<Flux::Resources::ResourceRef<Flux::Resources::Resource>> resources;
@@ -80,12 +82,14 @@ bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool 
         // Add to meshres
         meshres->indices_length = indices.size();
         meshres->indices = new uint32_t[meshres->indices_length];
+
+        meshres->draw_mode = Flux::Renderer::DrawMode::Triangles;
         
         for (int j = 0; j < meshres->indices_length; j++) meshres->indices[j] = indices[j];
 
         // Add to resource system, and serializer
         auto res = Flux::Resources::createResource(meshres);
-        auto id = ser.addResource(Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity()));
+        // auto id = ser.addResource(Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity()));
 
         mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)] = Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity());
     }
@@ -226,12 +230,13 @@ struct ToProcess
     Flux::EntityRef entity;
 };
 
-void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
+void createScene(const std::string& fname, Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
 {
     std::queue<ToProcess> nodes;
-    auto e = ctx->createEntity();
+    auto e = ctx->createNamedEntity(fname);
     Flux::Transform::TransformCom* f = new Flux::Transform::TransformCom;
     f->has_parent = false;
+    f->visible = true;
     e.addComponent(f);
     nodes.emplace(ToProcess {scene->mRootNode, e});
 
@@ -281,7 +286,7 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
                 auto mat = materials[mesh->mMaterialIndex];
                 auto resource = mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)];
 
-                auto new_entity = ctx->createEntity();
+                auto new_entity = ctx->createNamedEntity(mesh->mName.C_Str());
 
                 Flux::Renderer::addMesh(new_entity, resource, mat);
 
@@ -292,9 +297,10 @@ void createScene(Flux::Resources::Serializer& ser, const aiScene* scene, bool re
 
         for (int i = 0; i < node->mNumChildren; i++)
         {
-            auto new_entity = ctx->createEntity();
+            auto new_entity = ctx->createNamedEntity(node->mChildren[i]->mName.C_Str());
             Flux::Transform::TransformCom* f = new Flux::Transform::TransformCom;
             f->has_parent = false;
+            f->visible = true;
             new_entity.addComponent(f);
             Flux::Transform::setParent(new_entity, entity);
             nodes.emplace(ToProcess {node->mChildren[i], new_entity});
@@ -336,7 +342,7 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     processMaterials(input, ser, scene, release);
 
     // Create scene
-    createScene(ser, scene, release);
+    createScene(input.replace_extension("").filename(), ser, scene, release);
 
     // Save
     FluxArc::Archive file(output);

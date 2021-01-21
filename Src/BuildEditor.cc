@@ -14,7 +14,11 @@
 
 using namespace FluxED;
 
-BuildEditor::BuildEditor(int argc, char *argv[])
+BuildEditor::BuildEditor(int argc, char *argv[]):
+window(nullptr),
+tree(nullptr),
+editor(nullptr),
+proj(nullptr)
 {
     // Setup variables
     has_project = false;
@@ -63,10 +67,10 @@ BuildEditor::BuildEditor(int argc, char *argv[])
     Gtk::EventBox* event_box = nullptr;
     refBuilder->get_widget("3DEventBox", event_box);
 
-    window->add_events(Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK | Gdk::SMOOTH_SCROLL_MASK | Gdk::POINTER_MOTION_MASK);
+    window->add_events(Gdk::BUTTON_MOTION_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK | Gdk::SMOOTH_SCROLL_MASK | Gdk::POINTER_MOTION_MASK  | Gdk::SCROLL_MASK);
 
     // Create 3D Editor
-    editor = new Editor3D(glarea, event_box);
+    editor = new Editor3D(glarea, event_box, refBuilder);
 
     // Connect signals
     Gtk::MenuItem* menu = nullptr; // Reuse the same variable
@@ -131,7 +135,7 @@ void BuildEditor::itemClicked(const Gtk::TreeModel::Path &path, Gtk::TreeViewCol
 {
     auto iter = file_store->get_iter(path);
     std::string out_fname = iter->get_value(columns.output_filename);
-    editor->loadScene(proj.getFolder() / out_fname);
+    editor->loadScene(proj->getFolder() / out_fname);
 }
 
 // ===========================================================
@@ -140,7 +144,7 @@ void BuildEditor::itemClicked(const Gtk::TreeModel::Path &path, Gtk::TreeViewCol
 
 void BuildEditor::rebuildProject()
 {
-    proj.runBuild(true);
+    proj->runBuild(true);
 }
 
 // Thanks Stack Overflow: https://stackoverflow.com/a/874160/7179625
@@ -188,12 +192,12 @@ void BuildEditor::openProject()
             //     filename = filename + ".proj.json";
             // }
 
-            proj = FluxProj::Project(filename);
+            proj = new FluxProj::Project(filename);
             has_project = true;
             window->set_title(std::filesystem::path(filename).filename().string() + " - FluxED");
 
             // Load files
-            for (auto i : proj.getPaths())
+            for (auto i : proj->getPaths())
             {
                 if (i.active)
                 {
@@ -253,7 +257,7 @@ void BuildEditor::newProject()
                 filename = filename + ".proj.json";
             }
 
-            proj = FluxProj::Project(filename, true);
+            proj = new FluxProj::Project(filename, true);
             has_project = true;
             window->set_title(std::filesystem::path(filename).filename().string() + " - FluxED");
             break;
@@ -285,7 +289,7 @@ void BuildEditor::importFile()
         // Gtk::FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME );
     
     dialog.set_transient_for(*window);
-    dialog.set_current_folder(proj.getFolder());
+    dialog.set_current_folder(proj->getFolder());
 
     auto filter_any = Gtk::FileFilter::create();
     filter_any->set_name("All Files");
@@ -313,7 +317,7 @@ void BuildEditor::importFile()
             //     filename = filename + ".proj.json";
             // }
 
-            auto pp = proj.addFile(filename);
+            auto pp = proj->addFile(filename);
             if (pp.active)
             {
                 auto iter = file_store->append();
@@ -342,7 +346,7 @@ void BuildEditor::removeFile()
     auto selection = tree->get_selection();
     auto row = selection->get_selected();
     
-    proj.removeFile(row->get_value(columns.input_filename));
+    proj->removeFile(row->get_value(columns.input_filename));
 
     file_store->erase(row);
 }

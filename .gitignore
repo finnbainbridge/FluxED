@@ -4,3 +4,4 @@ build
 assets
 gmon.out
 profile.txt
+valgrind.txt

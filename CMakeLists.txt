@@ -6,6 +6,9 @@ project(FluxED VERSION 0.1.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 
+# Enable hell
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic") # -Wextra -Weverything")
+
 find_package(PkgConfig)
 if (!PACKAGES_FOUND)
     message("Could not find PkgConfig")
@@ -16,16 +19,30 @@ link_directories(${GTKMM_LIBRARY_DIRS})
 link_libraries(${GTKMM_LIBRARIES})
 
 add_executable(FluxED Src/main.cc 
+
+# Headers
 Include/FluxED/FluxEd.hh 
 Include/FluxProj/FluxProj.hh 
-Src/BuildEditor.cc Src/Editor3D.cc
+Include/FluxED/3DView.hh
+
+# 3D Editor
+Src/BuildEditor.cc 
+Src/Editor3D.cc
+Src/3DView/OrbitCamera.cc
+
+# 3D Editor components
+Src/Components/TransformCom.cc
+
+# FluxProj
 Src/Importers/AssimpImporter.cc
 Src/FluxProj/Project.cc)
 
-set(FLUX_GCC_PROFILE OFF)
+set(FLUX_GCC_PROFILE ON)
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=bounds")
 
 if (FLUX_GCC_PROFILE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -fstack-protector-strong")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
 
