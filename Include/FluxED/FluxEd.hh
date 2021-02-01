@@ -74,6 +74,10 @@ namespace FluxED
 
         void rebuildProject();
 
+        void sceneSaveAs();
+
+        void sceneSave();
+
         // Tree
         void itemClicked(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 
@@ -151,13 +155,21 @@ namespace FluxED
         /** Where the gizmos live */
         Flux::ECSCtx* gizmo_ecs;
 
+        bool sceneSaveAs(std::filesystem::path path);
+
+        void sceneSave();
+
     private:
 
         void loadComponents(Flux::EntityRef entity);
 
         Flux::ECSCtx* current_scene;
         Flux::Resources::Deserializer* current_scene_loader;
+        std::filesystem::path filename;
         bool has_scene;
+
+        std::vector<Flux::EntityRef> entities;
+
         Gtk::GLArea* glarea;
         Gtk::Box* com_list;
 

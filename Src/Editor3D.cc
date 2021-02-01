@@ -1,4 +1,5 @@
 #include "Flux/Log.hh"
+#include "FluxArc/FluxArc.hh"
 #include "gtkmm/expander.h"
 #include "gtkmm/widget.h"
 #include <string>
@@ -70,6 +71,8 @@ void Editor3D::loadScene(std::filesystem::path place)
         current_scene = nullptr;
     }
 
+    filename = place;
+
     LOG_INFO("Editor3D: Loading scene...");
     current_scene_loader = new Flux::Resources::Deserializer(place);
     current_scene = new Flux::ECSCtx();
@@ -95,7 +98,7 @@ void Editor3D::loadScene(std::filesystem::path place)
     LOG_INFO(place);
 
     current_scene_loader = new Flux::Resources::Deserializer(place);
-    auto entities = current_scene_loader->addToECS(current_scene);
+    entities = current_scene_loader->addToECS(current_scene);
 
     // Parse entities
     entity_store->clear();
@@ -209,6 +212,52 @@ void Editor3D::entityClicked(const Gtk::TreeModel::Path &path, Gtk::TreeViewColu
     }
 
     LOG_WARN("Could not find entity");
+}
+
+bool Editor3D::sceneSaveAs(std::filesystem::path path)
+{
+    if (!has_scene)
+    {
+        // lol this happened
+        // TODO: Tell the user
+        return false;
+    }
+
+    Flux::Resources::Serializer ser(path);
+
+    for (auto e : entities)
+    {
+        ser.addEntity(e);
+    }
+
+    FluxArc::Archive arc(path);
+
+    ser.save(arc, true);
+
+    return true;
+}
+
+void Editor3D::sceneSave()
+{
+    if (!has_scene)
+    {
+        // lol this happened
+        // TODO: Tell the user
+        return;
+    }
+
+    Flux::Resources::Serializer ser(filename);
+
+    for (auto e : entities)
+    {
+        ser.addEntity(e);
+    }
+
+    FluxArc::Archive arc(filename);
+
+    ser.save(arc, true);
+
+    return;
 }
 
 void Editor3D::loop(float delta)

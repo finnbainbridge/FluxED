@@ -27,6 +27,19 @@ static std::map<std::string, Flux::Resources::ResourceRef<Flux::Resources::Resou
 static std::vector<Flux::Resources::ResourceRef<Flux::Renderer::TextureRes>> internal_textures;
 static std::map<std::string, Flux::Resources::ResourceRef<Flux::Renderer::TextureRes>> external_textures;
 
+// Generate a hopefully unique id from a string
+uint32_t textToIHID(const std::string& text)
+{
+    // For now, just add up the characters
+    uint32_t out = 1024;
+    for (auto i : text)
+    {
+        out += i;
+    }
+
+    return out;
+}
+
 bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool release)
 {
     if (!scene->HasMeshes())
@@ -88,8 +101,9 @@ bool processMeshes(Flux::Resources::Serializer& ser, const aiScene* scene, bool 
         for (int j = 0; j < meshres->indices_length; j++) meshres->indices[j] = indices[j];
 
         // Add to resource system, and serializer
+        auto str = "msh" + std::string(mesh->mName.C_Str());
         auto res = Flux::Resources::createResource(meshres);
-        // auto id = ser.addResource(Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity()));
+        ser.addResource(Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity()), textToIHID(str));
 
         mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)] = Flux::Resources::ResourceRef<Flux::Resources::Resource>(res.getBaseEntity());
     }
@@ -123,7 +137,8 @@ bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& 
         std::memcpy(tex_res->image_data, &flipped_pixels[0], tex_res->image_data_size);
 
         auto tx_res = Flux::Resources::createResource(tex_res);
-        ser.addResource(tx_res.getBaseEntity());
+        auto str = "tex" + std::string(tex->mFilename.C_Str());
+        ser.addResource(tx_res.getBaseEntity(), textToIHID(str));
         internal_textures.push_back(tx_res);
     }
 
@@ -204,7 +219,8 @@ bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& 
                     // It is relative to the OUTPUT, not the PROJECT
                     tex_res->filename = std::filesystem::relative(new_g, input.parent_path());
                     auto tx_res = Flux::Resources::createResource(tex_res);
-                    ser.addResource(tx_res.getBaseEntity());
+                    auto str = "tex" + std::string(std::filesystem::relative(new_g, input.parent_path()));
+                    ser.addResource(tx_res.getBaseEntity(), textToIHID(str));
 
                     external_textures[name] = tx_res;
                 }
@@ -217,7 +233,9 @@ bool processMaterials(std::filesystem::path input, Flux::Resources::Serializer& 
             Flux::Renderer::setUniform(mat_res, "has_diffuse", false);
         }
 
-        ser.addResource(mat_res.getBaseEntity());
+        std::string str(mat->GetName().C_Str());
+        str = "mat" + str;
+        ser.addResource(mat_res.getBaseEntity(), textToIHID(str));
         materials.push_back(mat_res);
     }
 
@@ -286,7 +304,7 @@ void createScene(const std::string& fname, Flux::Resources::Serializer& ser, con
                 auto mat = materials[mesh->mMaterialIndex];
                 auto resource = mesh_ids[std::string(mesh->mName.C_Str(), mesh->mName.length)];
 
-                auto new_entity = ctx->createNamedEntity(mesh->mName.C_Str());
+                auto new_entity = ctx->createNamedEntity(std::string(mesh->mName.C_Str()));
 
                 Flux::Renderer::addMesh(new_entity, resource, mat);
 
@@ -332,7 +350,7 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     ctx = new Flux::ECSCtx();
 
     // Load Meshes into archive
-    Flux::Resources::Serializer ser;
+    Flux::Resources::Serializer ser(output);
     processMeshes(ser, scene, release);
 
     // Load Materials

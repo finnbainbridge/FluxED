@@ -19,23 +19,23 @@ link_directories(${GTKMM_LIBRARY_DIRS})
 link_libraries(${GTKMM_LIBRARIES})
 
 add_executable(FluxED Src/main.cc 
+    # Headers
+    Include/FluxED/FluxEd.hh 
+    Include/FluxProj/FluxProj.hh 
+    Include/FluxED/3DView.hh
 
-# Headers
-Include/FluxED/FluxEd.hh 
-Include/FluxProj/FluxProj.hh 
-Include/FluxED/3DView.hh
+    # 3D Editor
+    Src/BuildEditor.cc 
+    Src/Editor3D.cc
+    Src/3DView/OrbitCamera.cc
 
-# 3D Editor
-Src/BuildEditor.cc 
-Src/Editor3D.cc
-Src/3DView/OrbitCamera.cc
+    # 3D Editor components
+    Src/Components/TransformCom.cc
 
-# 3D Editor components
-Src/Components/TransformCom.cc
-
-# FluxProj
-Src/Importers/AssimpImporter.cc
-Src/FluxProj/Project.cc)
+    # FluxProj
+    Src/Importers/AssimpImporter.cc
+    Src/FluxProj/Project.cc
+)
 
 set(FLUX_GCC_PROFILE ON)
 

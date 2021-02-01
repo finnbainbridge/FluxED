@@ -90,6 +90,12 @@ proj(nullptr)
 
     refBuilder->get_widget("MenuRebuild", menu);
     menu->signal_activate().connect(sigc::mem_fun(*this, &BuildEditor::rebuildProject));
+
+    refBuilder->get_widget("MenuSaveAs", menu);
+    menu->signal_activate().connect(sigc::mem_fun(*this, &BuildEditor::sceneSaveAs));
+
+    refBuilder->get_widget("MenuSave", menu);
+    menu->signal_activate().connect(sigc::mem_fun(*this, &BuildEditor::sceneSave));
     
 
     // Stores and Trees
@@ -349,4 +355,64 @@ void BuildEditor::removeFile()
     proj->removeFile(row->get_value(columns.input_filename));
 
     file_store->erase(row);
+}
+
+void BuildEditor::sceneSaveAs()
+{
+    Gtk::FileChooserDialog dialog("Save Scene As",
+          Gtk::FILE_CHOOSER_ACTION_SAVE);
+    dialog.set_do_overwrite_confirmation(true);
+        // Gtk::FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME );
+    
+    dialog.set_transient_for(*window);
+
+    auto filter_any = Gtk::FileFilter::create();
+    filter_any->set_name("Flux Scenes");
+    filter_any->add_pattern("*.farc");
+    dialog.add_filter(filter_any);
+
+    //Add response buttons the the dialog:
+    dialog.add_button("_Save", Gtk::RESPONSE_CANCEL);
+    dialog.add_button("Create", Gtk::RESPONSE_OK);
+
+    dialog.set_filename("untitled.farc");
+
+    int result = dialog.run();
+
+    //Handle the response:
+    switch(result)
+    {
+        case(Gtk::RESPONSE_OK):
+        {
+            std::string filename = dialog.get_filename();
+
+            if (!hasEnding(filename, ".farc"))
+            {
+                filename = filename + ".farc";
+            }
+
+            if (editor->sceneSaveAs(filename))
+            {
+                // Success! Add to project
+                proj->addFile(filename);
+            }
+
+            break;
+        }
+        case(Gtk::RESPONSE_CANCEL):
+        {
+            // std::cout << "Cancel clicked." << std::endl;
+            break;
+        }
+        default:
+        {
+            // std::cout << "Unexpected button clicked." << std::endl;
+            break;
+        }
+    }
+}
+
+void BuildEditor::sceneSave()
+{
+    editor->sceneSave();
 }
