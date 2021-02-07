@@ -383,3 +383,4 @@ void TransformComPlugin::updateTransform()
 }
 
 static bool a = FluxED::addComponentPlugin("TransformCom", new TransformComPlugin);
+static bool p = FluxED::addPreset("Default Cube", "Presets/DefaultCube.farc");

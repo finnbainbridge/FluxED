@@ -13,6 +13,7 @@ Terminology:
 #include "Flux/Resources.hh"
 #include "glibmm/ustring.h"
 #include "gtkmm/box.h"
+#include "gtkmm/entry.h"
 #include "gtkmm/eventbox.h"
 #include "gtkmm/glarea.h"
 #include "gtkmm/listbox.h"
@@ -23,6 +24,7 @@ Terminology:
 #include "FluxGTK/FluxGTK.hh"
 #include "FluxProj/FluxProj.hh"
 #include <filesystem>
+#include <functional>
 
 namespace FluxED
 {
@@ -63,6 +65,9 @@ namespace FluxED
         /** Gets called every frame */
         void loop(float delta);
 
+        // Helpers
+        std::string getTextDialog(const std::string& title, const std::string& message);
+
         // File IO
         void newProject();
 
@@ -78,6 +83,12 @@ namespace FluxED
 
         void sceneSave();
 
+        void linkScene();
+
+        void newScene();
+
+        void sceneRename();
+
         // Tree
         void itemClicked(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
 
@@ -88,6 +99,10 @@ namespace FluxED
         FileModelColumns columns;
         Glib::RefPtr<Gtk::ListStore> file_store;
         Gtk::TreeView* tree;
+
+        Gtk::Dialog* entry_dialog;
+        Gtk::Entry* entry_entry;
+        Gtk::Label* entry_label;
 
         // Editor3D
         Editor3D* editor;
@@ -134,6 +149,17 @@ namespace FluxED
         return true;
     }
 
+    inline std::unordered_map<std::string, std::string> presets;
+
+    /**
+    Adds a preset to FluxED. This preset can be added to any scene
+    */
+    inline bool addPreset(const std::string& ext, const std::string& filename)
+    {
+        presets[ext] = filename;
+        return true;
+    }
+
     class Editor3D
     {
     public:
@@ -159,6 +185,14 @@ namespace FluxED
 
         void sceneSave();
 
+        void linkScene(std::filesystem::path path);
+
+        void newScene(std::filesystem::path path);
+
+        void rename(const std::string& name);
+
+        void addPreset();
+
     private:
 
         void loadComponents(Flux::EntityRef entity);
@@ -180,6 +214,11 @@ namespace FluxED
         Gtk::TreeView* entity_tree;
         Glib::RefPtr<Gtk::TreeStore> entity_store;
         std::map<int, Gtk::TreeIter> entity_tree_values;
+
+        Gtk::TreeView* preset_tree;
+        Glib::RefPtr<Gtk::TreeStore> preset_store;
+        Gtk::Dialog* preset_picker;
+        std::map<Gtk::TreeIter, std::string> preset_iters;
     };
 }
 

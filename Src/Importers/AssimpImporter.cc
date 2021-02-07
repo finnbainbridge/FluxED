@@ -367,10 +367,10 @@ bool assimpImporter(std::filesystem::path input, std::filesystem::path output, b
     ser.save(file, release);
 
     // Cleanup
-    for (auto i : resources)
-    {
-        Flux::Resources::removeResource(i);
-    }
+    // for (auto i : resources)
+    // {
+    //     Flux::Resources::removeResource(i);
+    // }
     ctx->destroyAllEntities();
 
     return true;

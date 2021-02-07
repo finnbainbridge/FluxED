@@ -1,4 +1,5 @@
 #include "FluxArc/FluxArc.hh"
+#include <cstdlib>
 #define GLM_FORCE_CTOR_INIT
 
 // #include <bits/stdint-uintn.h>
@@ -70,7 +71,7 @@ void init(int argc, char** argv) {
 
     camera.addComponent<Flux::Transform::TransformCom>(tc);
     Flux::Transform::setCamera(camera);
-    auto o = glm::vec3(0,0,2.5);
+    auto o = glm::vec3(0,0,10);
     Flux::Transform::translate(camera, o);
     LOG_INFO("Setup camera");
 
@@ -85,19 +86,29 @@ void init(int argc, char** argv) {
     Flux::Transform::addTransformSystems(&ctx);
     LOG_INFO("Added transform systems");
 
-    // LOG_INFO("Completed init");
-
-    // Flux::Resources::Serializer ser;
-    // ser.addEntity(quad);
-    // ser.addEntity(camera);
-    // FluxArc::Archive arc("test.farc");
-    // ser.save(arc, true);
-
-    Flux::Resources::Deserializer s("assets/jmodl.farc");
-    // Flux::Resources::Deserializer s("assets/Survival_BackPack_2.farc");
-    // Flux::Resources::Deserializer s("assets/GreenV2.1.farc");
-    // Flux::Resources::Deserializer s("assets/old_torch_-_dirt_low_poly/scene.farc");
-    s.addToECS(&ctx);
+    for (int i = 0; i < 12; i++)
+    {
+        int num = random() % 3;
+        
+        if (num == 0)
+        {
+            auto loader = Flux::Resources::deserialize("assets/GreenV2.1.farc");
+            auto ens = loader->addToECS(&ctx);
+            Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+        }
+        else if (num == 1)
+        {
+            auto loader = Flux::Resources::deserialize("assets/jmodl.farc");
+            auto ens = loader->addToECS(&ctx);
+            Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+        }
+        else
+        {
+            auto loader = Flux::Resources::deserialize("assets/backpack.farc");
+            auto ens = loader->addToECS(&ctx);
+            Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+        }
+    }
 }
 
 void loop(float delta)

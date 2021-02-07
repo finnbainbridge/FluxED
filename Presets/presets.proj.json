@@ -1,0 +1,9 @@
+{
+    "files": [
+        {
+            "input": "DefaultCube.obj",
+            "output": "DefaultCube.farc"
+        }
+    ],
+    "version": 1
+}
