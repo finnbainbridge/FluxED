@@ -6,6 +6,7 @@ General:
 - Better emscripten support
     - Streaming files
     - Get requestAnimationFrame to actually work
+- Fix the memory leak
 
 Rendering:
 - Lighting
@@ -13,8 +14,8 @@ Rendering:
 - More optimisations in general
 
 FluxED:
-- Support creating scenes
-- Nested scenes
+- Support creating scenes (KINDA DONE)
+- Nested scenes (DONE)
 
 Other:
 - Store images as .farc files, rather than slow image files like png

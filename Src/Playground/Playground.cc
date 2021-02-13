@@ -18,6 +18,10 @@ Flux::ECSCtx ctx;
 
 Flux::EntityRef quad;
 Flux::EntityRef camera;
+Flux::EntityRef camera_stick;
+
+Flux::EntityRef light;
+Flux::EntityRef light_stick;
 int color = 0;
 double click_timer = 0;
 
@@ -61,19 +65,32 @@ void init(int argc, char** argv) {
     // LOG_INFO("Added mesh");
 
     camera = ctx.createEntity();
+    Flux::Transform::giveTransform(camera);
 
-    auto tc = new Flux::Transform::TransformCom;
-    tc->transformation = glm::mat4();
-    tc->model_view = glm::mat4();
-    tc->has_parent = false;
+    camera_stick = ctx.createEntity();
+    Flux::Transform::giveTransform(camera_stick);
 
-    LOG_INFO("Created camera");
-
-    camera.addComponent<Flux::Transform::TransformCom>(tc);
     Flux::Transform::setCamera(camera);
     auto o = glm::vec3(0,0,10);
     Flux::Transform::translate(camera, o);
     LOG_INFO("Setup camera");
+
+    Flux::Transform::setParent(camera, camera_stick);
+
+    Flux::Renderer::addLight(camera, 10, glm::vec3(1, 0.1, 0.1));
+
+    light = ctx.createEntity();
+    Flux::Transform::giveTransform(light);
+
+    light_stick = ctx.createEntity();
+    Flux::Transform::giveTransform(light_stick);
+
+    Flux::Transform::translate(light, o);
+    LOG_INFO("Setup camera");
+
+    Flux::Transform::setParent(light, light_stick);
+
+    Flux::Renderer::addLight(light, 10, glm::vec3(0.1, 0.1, 1));
 
     // auto o2 = glm::vec3(0,0,0);
     // Flux::Transform::translate(quad, o2);
@@ -150,6 +167,8 @@ void loop(float delta)
     // }
 
     // Flux::Transform::setTranslation(quad, glm::vec3(Flux::Input::getMousePosition() / glm::vec2(Flux::GLRenderer::current_window->width, -Flux::GLRenderer::current_window->height), 0));
+    Flux::Transform::rotate(camera_stick, glm::vec3(0, 1, 0), 0.5 * delta);
+    // Flux::Transform::rotate(light_stick, glm::vec3(0, 1, 0), -0.5 * delta);
     ctx.runSystems(delta);
 }
 
