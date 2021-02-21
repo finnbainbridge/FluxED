@@ -1,15 +1,23 @@
 #version 300 es
-precision mediump float;
+precision highp float;
 out vec4 FragColor;
 
 in vec2 tex_coord;
 in vec4 normal;
 in vec4 world_pos;
+in mat3 tbn;
 
+// MUST be in alphabetical order
 layout (std140) uniform Material 
 {
     vec3 color;
     int has_diffuse;
+    int has_metal_map;
+    int has_normal_map;
+    int has_roughness_map;
+
+    float metallic;
+    float roughness;
 };
 
 layout (std140) uniform Lights
@@ -20,8 +28,8 @@ layout (std140) uniform Lights
 };
 
 // TODO: Put as uniforms in Material
-float metallic = 0.6;
-float roughness = 0.2;
+// float metallic = 0.6;
+// float roughness = 0.2;
 // float ao = 0.0;
 
 // TODO: Support multiple lights
@@ -35,6 +43,9 @@ uniform int light_indexes[8];
 uniform vec3 cam_pos;
 
 uniform sampler2D diffuse_texture;
+uniform sampler2D metal_map;
+uniform sampler2D normal_map;
+uniform sampler2D roughness_map;
 
 const float PI = 3.14159265359;
 
@@ -47,9 +58,9 @@ vec3 fresnelSchlick(float cos_theta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cos_theta, 0.0), 5.0);
 }
 
-float distributionGGX(vec3 N, vec3 H, float roughness)
+float distributionGGX(vec3 N, vec3 H, float roughness_p)
 {
-    float a = roughness * roughness;
+    float a = roughness_p * roughness_p;
     float a2 = a * a;
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
@@ -61,9 +72,9 @@ float distributionGGX(vec3 N, vec3 H, float roughness)
     return num / denom;
 }
 
-float geometrySchlickGGX(float NdotV, float roughness)
+float geometrySchlickGGX(float NdotV, float roughness_p)
 {
-    float r = (roughness + 1.0);
+    float r = (roughness_p + 1.0);
     float k = (r*r) / 8.0;
 
     float num = NdotV;
@@ -72,17 +83,19 @@ float geometrySchlickGGX(float NdotV, float roughness)
     return num / denom;
 }
 
-float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness_p)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = geometrySchlickGGX(NdotV, roughness);
-    float ggx1 = geometrySchlickGGX(NdotL, roughness);
+    float ggx2 = geometrySchlickGGX(NdotV, roughness_p);
+    float ggx1 = geometrySchlickGGX(NdotL, roughness_p);
 
     return ggx1 * ggx2;
 }
 
-vec3 reflectanceEquation(vec3 N, vec3 V, vec3 F0, vec3 diffuse, vec3 light_pos, vec3 light_color, float light_radius)
+vec3 reflectanceEquation(vec3 N, vec3 V, vec3 F0, vec3 diffuse, vec3 light_pos, 
+                        vec3 light_color, float light_radius,
+                        float roughness_p, float metal_p)
 {
     // Calculate per light radiance
     vec3 L = normalize(light_pos - world_pos.xyz);
@@ -93,13 +106,13 @@ vec3 reflectanceEquation(vec3 N, vec3 V, vec3 F0, vec3 diffuse, vec3 light_pos, 
     vec3 radiance = light_color * attenuation;
 
     // Cook-Torrance BRDF
-    float NDF = distributionGGX(N, H, roughness);
-    float G = geometrySmith(N, V, L, roughness);
+    float NDF = distributionGGX(N, H, roughness_p);
+    float G = geometrySmith(N, V, L, roughness_p);
     vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
+    kD *= 1.0 - metal_p;
 
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
@@ -121,25 +134,64 @@ void main()
     {
         diffuse = vec4(color.x, color.y, color.z, 1.0f);
     }
-    
-    vec3 N = normal.xyz;
+
+    vec3 N;
+    if (has_normal_map == 1)
+    {
+        N = texture(normal_map, tex_coord).xyz;
+
+        // Make the normal map work properly
+        N = normalize(N * 2.0 - 1.0);
+        N = normalize(tbn * N);
+
+        // TODO: Do stuff in vertex shader or something. See https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+    }
+    else
+    {
+        N = normal.xyz;
+    }
+
+    float roughness_p;
+    if (has_roughness_map == 1)
+    {
+        roughness_p = texture(roughness_map, tex_coord).x;
+    }
+    else
+    {
+        roughness_p = roughness;
+    }
+
+    float metal_p;
+    if (has_metal_map == 1)
+    {
+        metal_p = texture(metal_map, tex_coord).x;
+    }
+    else
+    {
+        metal_p = metallic;
+    }
+
     vec3 V = normalize(cam_pos - world_pos.xyz);
 
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, diffuse.xyz, metallic);
+    F0 = mix(F0, diffuse.xyz, metal_p);
 
     // Reflectance equation
-    vec3 Lo = vec3(0.0);
+    vec3 Lo = vec3(0.0, 0.0, 0.0);
     for (int i = 0; i < 8; i++)
     {
-        if (i != -1)
+        if (light_indexes[i] != -1)
         {
-            Lo += reflectanceEquation(N, V, F0, diffuse.xyz, light_positions[light_indexes[i]], light_colors[light_indexes[i]], light_radii[light_indexes[i]]);
+            Lo += reflectanceEquation(N, V, F0, diffuse.xyz, light_positions[light_indexes[i]], light_colors[light_indexes[i]], light_radii[light_indexes[i]],
+                    // 0.5, 0.2);
+                    roughness_p, metal_p);
+            // Lo += vec3(0.5, 0, 0);
         }
     }
 
     vec3 color = pow(Lo/(Lo + 1.0), vec3(1.0/2.2));
 
-    // Preserve the alpha from the material
-    FragColor = vec4(color, diffuse.w);
+    FragColor = vec4(color, 1);
+    // FragColor = diffuse;
+    // FragColor = vec4(1, 0, 0, 1);
 }

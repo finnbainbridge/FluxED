@@ -218,7 +218,8 @@ namespace FluxED
         Gtk::TreeView* preset_tree;
         Glib::RefPtr<Gtk::TreeStore> preset_store;
         Gtk::Dialog* preset_picker;
-        std::map<Gtk::TreeIter, std::string> preset_iters;
+        std::map<int, std::string> preset_iters;
+        std::vector<Gtk::TreeIter> iters;
     };
 }
 

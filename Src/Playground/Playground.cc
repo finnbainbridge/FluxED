@@ -64,44 +64,15 @@ void init(int argc, char** argv) {
     // Flux::Renderer::addMesh(quad, mesh_res, mat_res);
     // LOG_INFO("Added mesh");
 
-    camera = ctx.createEntity();
-    Flux::Transform::giveTransform(camera);
+    // Temp: Create light scene
+    // auto lt = ctx.createNamedEntity("Light");
+    // Flux::Transform::giveTransform(lt);
+    // Flux::Renderer::addLight(lt, 30, glm::vec3(1, 1, 1));
 
-    camera_stick = ctx.createEntity();
-    Flux::Transform::giveTransform(camera_stick);
-
-    Flux::Transform::setCamera(camera);
-    auto o = glm::vec3(0,0,10);
-    Flux::Transform::translate(camera, o);
-    LOG_INFO("Setup camera");
-
-    Flux::Transform::setParent(camera, camera_stick);
-
-    Flux::Renderer::addLight(camera, 10, glm::vec3(1, 0.1, 0.1));
-
-    light = ctx.createEntity();
-    Flux::Transform::giveTransform(light);
-
-    light_stick = ctx.createEntity();
-    Flux::Transform::giveTransform(light_stick);
-
-    Flux::Transform::translate(light, o);
-    LOG_INFO("Setup camera");
-
-    Flux::Transform::setParent(light, light_stick);
-
-    Flux::Renderer::addLight(light, 10, glm::vec3(0.1, 0.1, 1));
-
-    // auto o2 = glm::vec3(0,0,0);
-    // Flux::Transform::translate(quad, o2);
-
-    // // Flux::Transform::setParent(ctx, camera, quad);
-    // LOG_INFO("Repositioned quad");
-
-    Flux::GLRenderer::addGLRenderer(&ctx);
-    LOG_INFO("Added GL Renderer");
-    Flux::Transform::addTransformSystems(&ctx);
-    LOG_INFO("Added transform systems");
+    // auto ser = Flux::Resources::Serializer("Light.farc");
+    // ser.addEntity(lt);
+    // FluxArc::Archive arc("Light.farc");
+    // ser.save(arc, true);
 
     for (int i = 0; i < 12; i++)
     {
@@ -126,6 +97,45 @@ void init(int argc, char** argv) {
             Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
         }
     }
+
+    camera = ctx.createEntity();
+    Flux::Transform::giveTransform(camera);
+
+    camera_stick = ctx.createEntity();
+    Flux::Transform::giveTransform(camera_stick);
+
+    Flux::Transform::setCamera(camera);
+    auto o = glm::vec3(0,0,10);
+    Flux::Transform::translate(camera, o);
+    LOG_INFO("Setup camera");
+
+    Flux::Transform::setParent(camera, camera_stick);
+
+    Flux::Renderer::addLight(camera, 30, glm::vec3(1, 1, 1));
+
+    light = ctx.createEntity();
+    Flux::Transform::giveTransform(light);
+
+    light_stick = ctx.createEntity();
+    Flux::Transform::giveTransform(light_stick);
+
+    Flux::Transform::translate(light, o);
+    LOG_INFO("Setup camera");
+
+    Flux::Transform::setParent(light, light_stick);
+
+    Flux::Renderer::addLight(light, 30, glm::vec3(1, 1, 1));
+
+    // auto o2 = glm::vec3(0,0,0);
+    // Flux::Transform::translate(quad, o2);
+
+    // // Flux::Transform::setParent(ctx, camera, quad);
+    // LOG_INFO("Repositioned quad");
+
+    Flux::GLRenderer::addGLRenderer(&ctx);
+    LOG_INFO("Added GL Renderer");
+    Flux::Transform::addTransformSystems(&ctx);
+    LOG_INFO("Added transform systems");
 }
 
 void loop(float delta)

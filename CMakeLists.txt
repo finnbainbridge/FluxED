@@ -46,6 +46,9 @@ if (FLUX_GCC_PROFILE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
 
+# Make sure Flux doesn't free vertex data and textures on the CPU 
+set(FLUX_NO_CPU_FREE ON)
+
 add_subdirectory(Flux/FluxGTK)
 target_link_libraries(FluxED PUBLIC FluxGTK)
 
@@ -66,6 +69,7 @@ target_link_libraries(FluxED PUBLIC nlohmann_json)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
 
 # ============================================================
 # Playground

@@ -3,6 +3,8 @@
 #include "gtkmm/dialog.h"
 #include "gtkmm/expander.h"
 #include "gtkmm/widget.h"
+#include <algorithm>
+#include <iostream>
 #include <string>
 #define GLM_FORCE_CTOR_INIT
 #include "FluxED/3DView.hh"
@@ -62,9 +64,11 @@ columns()
     
     for (auto i : presets)
     {
-        auto iter = preset_store->append();
+        Gtk::TreeIter iter = preset_store->append();
         (*iter)[columns.name] = i.first;
-        preset_iters[iter] = i.second;
+        iters.push_back(iter);
+        preset_iters[iters.size()-1] = i.second;
+        std::cout << i.first << "\n";
     }
 }
 
@@ -412,13 +416,13 @@ void Editor3D::addPreset()
 {
     if (!has_scene) {return;}
     auto out = preset_picker->run();
-    preset_picker->hide();
 
     switch (out)
     {
         case (Gtk::RESPONSE_OK):
             auto iter = preset_tree->get_selection()->get_selected();
-            auto fname = preset_iters[iter];
+            auto fname = preset_iters[std::find(iters.begin(), iters.end(), iter) - iters.begin()];
+            // preset_picker->hide();
 
             // Load the file
             auto file = Flux::Resources::deserialize(fname, true);
@@ -461,8 +465,9 @@ void Editor3D::addPreset()
             }
 
             break;
-
     }
+
+    preset_picker->hide();
 }
 
 void Editor3D::loop(float delta)
