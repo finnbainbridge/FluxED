@@ -31,6 +31,7 @@ add_executable(FluxED Src/main.cc
 
     # 3D Editor components
     Src/Components/TransformCom.cc
+    Src/Components/LightCom.cc
 
     # FluxProj
     Src/Importers/AssimpImporter.cc

@@ -543,7 +543,7 @@ void createScene(const std::string& fname, Flux::Resources::Serializer& ser, con
         Flux::Transform::giveTransform(new_entity);
         Flux::Transform::translate(new_entity, glm::vec3(light->mPosition.x, light->mPosition.y, light->mPosition.z));
         // aiLightSourceType::
-        Flux::Renderer::addLight(new_entity,light->mSize.Length(), glm::vec3(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b));
+        Flux::Renderer::addPointLight(new_entity,light->mSize.Length(), glm::vec3(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b));
 
         ser.addEntity(new_entity);
     }

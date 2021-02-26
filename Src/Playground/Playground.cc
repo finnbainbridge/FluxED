@@ -65,14 +65,16 @@ void init(int argc, char** argv) {
     // LOG_INFO("Added mesh");
 
     // Temp: Create light scene
-    // auto lt = ctx.createNamedEntity("Light");
-    // Flux::Transform::giveTransform(lt);
-    // Flux::Renderer::addLight(lt, 30, glm::vec3(1, 1, 1));
+    auto lt = ctx.createNamedEntity("Light");
+    Flux::Transform::giveTransform(lt);
+    Flux::Renderer::addPointLight(lt, 30, glm::vec3(1, 1, 1));
 
-    // auto ser = Flux::Resources::Serializer("Light.farc");
-    // ser.addEntity(lt);
-    // FluxArc::Archive arc("Light.farc");
-    // ser.save(arc, true);
+    auto ser = Flux::Resources::Serializer("Presets/Light.farc");
+    ser.addEntity(lt);
+    FluxArc::Archive arc("Presets/Light.farc");
+    ser.save(arc, true);
+
+    ctx.destroyEntity(lt);
 
     for (int i = 0; i < 12; i++)
     {
@@ -111,7 +113,7 @@ void init(int argc, char** argv) {
 
     Flux::Transform::setParent(camera, camera_stick);
 
-    Flux::Renderer::addLight(camera, 30, glm::vec3(1, 1, 1));
+    // Flux::Renderer::addPointLight(camera, 30, glm::vec3(1, 1, 1));
 
     light = ctx.createEntity();
     Flux::Transform::giveTransform(light);
@@ -124,7 +126,11 @@ void init(int argc, char** argv) {
 
     Flux::Transform::setParent(light, light_stick);
 
-    Flux::Renderer::addLight(light, 30, glm::vec3(1, 1, 1));
+    // Flux::Renderer::addPointLight(light, 30, glm::vec3(1, 1, 1));
+
+    // Flux::Renderer::addDirectionalLight(camera, glm::vec3(-0.2,1,-0.3), 9999, glm::vec3(1, 1, 1));
+
+    Flux::Renderer::addSpotLight(camera, glm::radians(20.0f), 9999, glm::vec3(1, 1, 1));
 
     // auto o2 = glm::vec3(0,0,0);
     // Flux::Transform::translate(quad, o2);

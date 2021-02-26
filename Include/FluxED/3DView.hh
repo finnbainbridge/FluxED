@@ -77,9 +77,11 @@ namespace View3D
         void targetEntity(Flux::EntityRef entity);
 
         void setVisible(bool vis);
+
+        /* Parent entity and center of thing */
+        Flux::EntityRef center;
     private:
 
-        Flux::EntityRef center;
         Flux::EntityRef x_axis;
         Flux::EntityRef y_axis;
         Flux::EntityRef z_axis;

@@ -37,6 +37,9 @@ void View3D::OrbitCamera::addToCtx(Flux::ECSCtx *ctx)
     Flux::Transform::translate(camera, glm::vec3(0, 0, 5));
     Flux::Transform::setCamera(camera);
 
+    // TODO: Make this not segfault
+    // Flux::Renderer::addSpotLight(camera, glm::radians(20.0), 9999, glm::vec3(1, 1, 1));
+
     centers.push_back(center);
     cameras.push_back(camera);
 }

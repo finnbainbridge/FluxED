@@ -181,6 +181,9 @@ namespace FluxED
         /** Where the gizmos live */
         Flux::ECSCtx* gizmo_ecs;
 
+        /** Vector of all the entities in the active scene */
+        std::vector<Flux::EntityRef> entities;
+
         bool sceneSaveAs(std::filesystem::path path);
 
         void sceneSave();
@@ -201,8 +204,6 @@ namespace FluxED
         Flux::Resources::Deserializer* current_scene_loader;
         std::filesystem::path filename;
         bool has_scene;
-
-        std::vector<Flux::EntityRef> entities;
 
         Gtk::GLArea* glarea;
         Gtk::Box* com_list;

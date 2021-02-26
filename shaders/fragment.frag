@@ -23,8 +23,10 @@ layout (std140) uniform Material
 layout (std140) uniform Lights
 {
     vec3 light_positions[128];
+    vec3 light_directions[128];
     vec3 light_colors[128];
-    float light_radii[128];
+    vec3 light_infos[128];
+
 };
 
 // TODO: Put as uniforms in Material
@@ -93,17 +95,49 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness_p)
     return ggx1 * ggx2;
 }
 
+/*
+Light Infos: Vec3(enum light type, float radius, float light_infos.z)
+Types:
+0 - Point light
+1 - Directional light
+2 - Spot light
+*/
 vec3 reflectanceEquation(vec3 N, vec3 V, vec3 F0, vec3 diffuse, vec3 light_pos, 
-                        vec3 light_color, float light_radius,
+                        vec3 light_color, vec3 light_infos, vec3 light_direction,
                         float roughness_p, float metal_p)
 {
     // Calculate per light radiance
-    vec3 L = normalize(light_pos - world_pos.xyz);
+    vec3 L;
+    if (light_infos.x == 1.0)
+    {
+        L = normalize(-light_direction);
+    }
+    else
+    {
+        L = normalize(light_pos - world_pos.xyz);
+    }
+
     vec3 H = normalize(V + L);
     float distance = length(light_pos - world_pos.xyz);
     // float attenuation = 1.0 / (distance * distance);
-    float attenuation = pow(1.0-pow((distance/light_radius),4.0),2.0)/distance*distance+1.0;
-    vec3 radiance = light_color * attenuation;
+    vec3 radiance;
+    if (light_infos.x == 0.0)
+    {
+        float attenuation = pow(1.0-pow((distance/light_infos[1]),4.0),2.0)/distance*distance+1.0;
+        radiance = light_color * attenuation;
+    }
+    else if (light_infos.x == 2.0)
+    {
+        float theta = dot(L, normalize(-light_direction));
+        float inner_cutoff = (light_infos.z * 1.1);
+        float epsilon = inner_cutoff - light_infos.z;
+        float attenuation = clamp((theta - light_infos.z) / epsilon, 0.0, 1.0);
+        radiance = light_color * attenuation;
+    }
+    else
+    {
+        radiance = light_color;
+    }
 
     // Cook-Torrance BRDF
     float NDF = distributionGGX(N, H, roughness_p);
@@ -182,7 +216,8 @@ void main()
     {
         if (light_indexes[i] != -1)
         {
-            Lo += reflectanceEquation(N, V, F0, diffuse.xyz, light_positions[light_indexes[i]], light_colors[light_indexes[i]], light_radii[light_indexes[i]],
+            Lo += reflectanceEquation(N, V, F0, diffuse.xyz, light_positions[light_indexes[i]], light_colors[light_indexes[i]], light_infos[light_indexes[i]],
+                    light_directions[light_indexes[i]],
                     // 0.5, 0.2);
                     roughness_p, metal_p);
             // Lo += vec3(0.5, 0, 0);
