@@ -1,4 +1,6 @@
+#include "Flux/Physics.hh"
 #include "FluxArc/FluxArc.hh"
+#include <cstdio>
 #include <cstdlib>
 #define GLM_FORCE_CTOR_INIT
 
@@ -26,6 +28,8 @@ int color = 0;
 double click_timer = 0;
 
 Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes> mat_res;
+
+std::vector<Flux::EntityRef> meshes;
 
 void init(int argc, char** argv) {
     
@@ -75,6 +79,7 @@ void init(int argc, char** argv) {
     ser.save(arc, true);
 
     ctx.destroyEntity(lt);
+    int c = 0;
 
     for (int i = 0; i < 12; i++)
     {
@@ -85,20 +90,58 @@ void init(int argc, char** argv) {
             auto loader = Flux::Resources::deserialize("assets/GreenV2.1.farc");
             auto ens = loader->addToECS(&ctx);
             Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+
+            for (auto i : ens)
+            {
+                if (i.hasComponent<Flux::Renderer::MeshCom>())
+                {
+                    Flux::Physics::giveBoundingBox(i);
+                    c ++;
+                    // meshes.push_back(i);
+                    // auto dent = ctx.createEntity();
+                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                }
+            }
         }
         else if (num == 1)
         {
             auto loader = Flux::Resources::deserialize("assets/jmodl.farc");
             auto ens = loader->addToECS(&ctx);
             Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+
+            for (auto i : ens)
+            {
+                if (i.hasComponent<Flux::Renderer::MeshCom>())
+                {
+                    // Flux::Physics::giveBoundingBox(i);
+                    c ++;
+                    // meshes.push_back(i);
+                    // auto dent = ctx.createEntity();
+                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                }
+            }
         }
         else
         {
             auto loader = Flux::Resources::deserialize("assets/backpack.farc");
             auto ens = loader->addToECS(&ctx);
             Flux::Transform::translate(ens[0], glm::vec3((i-6) * 3, 0, 0));
+
+            for (auto i : ens)
+            {
+                if (i.hasComponent<Flux::Renderer::MeshCom>())
+                {
+                    Flux::Physics::giveBoundingBox(i);
+                    c ++;
+                    // meshes.push_back(i);
+                    // auto dent = ctx.createEntity();
+                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                }
+            }
         }
     }
+
+    std::cout << "Added bounding box: " << c << "\n";
 
     camera = ctx.createEntity();
     Flux::Transform::giveTransform(camera);
@@ -140,6 +183,7 @@ void init(int argc, char** argv) {
 
     Flux::GLRenderer::addGLRenderer(&ctx);
     LOG_INFO("Added GL Renderer");
+    ctx.addSystemFront(new Flux::Physics::BroadPhaseSystem);
     Flux::Transform::addTransformSystems(&ctx);
     LOG_INFO("Added transform systems");
 }
@@ -184,7 +228,19 @@ void loop(float delta)
 
     // Flux::Transform::setTranslation(quad, glm::vec3(Flux::Input::getMousePosition() / glm::vec2(Flux::GLRenderer::current_window->width, -Flux::GLRenderer::current_window->height), 0));
     Flux::Transform::rotate(camera_stick, glm::vec3(0, 1, 0), 0.5 * delta);
-    // Flux::Transform::rotate(light_stick, glm::vec3(0, 1, 0), -0.5 * delta);
+    // auto x = Flux::Transform::getGlobalTranslation(camera);
+
+    // printf("%f %f %f Delta: %f\n", x.x, x.y, x.z, delta);
+    // Flux::Tansform::rotate(light_stick, glm::vec3(0, 1, 0), -0.5 * delta);
+
+    // Update Bounding Boxes
+    // for (auto i : meshes)
+    // {
+    //     // This is soooo inefficient...
+    //     Flux::Transform::rotate(i, glm::vec3(0, 1, 0), 0.2 * delta);
+    //     i.getComponent<Flux::Physics::BoundingCom>()->box->updateTransform(Flux::Transform::getParentTransform(i));
+    // }
+
     ctx.runSystems(delta);
 }
 

@@ -38,7 +38,7 @@ add_executable(FluxED Src/main.cc
     Src/FluxProj/Project.cc
 )
 
-set(FLUX_GCC_PROFILE ON)
+set(FLUX_GCC_PROFILE OFF)
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=bounds")
 
@@ -84,3 +84,16 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(Flux/FluxGTK/FluxEngine/ThirdParty/glfw)
 target_link_libraries(FluxPlayground PUBLIC glfw)
 target_link_libraries(FluxPlayground PUBLIC FluxEngine)
+
+# ============================================================
+# Physics Playground
+# ============================================================
+# Big hack
+add_executable(PhysicsPlayground Src/Playground/PhysicsPlayground.cc Flux/FluxGTK/FluxEngine/Src/OpenGL/GLFW/GLFW.cc)
+# GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# add_subdirectory(Flux/FluxGTK/FluxEngine/ThirdParty/glfw)
+target_link_libraries(PhysicsPlayground PUBLIC glfw)
+target_link_libraries(PhysicsPlayground PUBLIC FluxEngine)

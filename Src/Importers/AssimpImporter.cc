@@ -1,5 +1,6 @@
 #include "Flux/ECS.hh"
 #include "Flux/Log.hh"
+#include "Flux/Physics.hh"
 #include "Flux/Resources.hh"
 #include "FluxArc/FluxArc.hh"
 #include "FluxProj/FluxProj.hh"
@@ -514,6 +515,9 @@ void createScene(const std::string& fname, Flux::Resources::Serializer& ser, con
                 auto new_entity = ctx->createNamedEntity(std::string(mesh->mName.C_Str()));
 
                 Flux::Renderer::addMesh(new_entity, resource, mat);
+
+                // Add Bounding Box
+                Flux::Physics::giveBoundingBox(new_entity);
 
                 Flux::Transform::setParent(new_entity, entity);
                 ser.addEntity(new_entity);

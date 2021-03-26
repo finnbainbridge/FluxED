@@ -5,11 +5,10 @@ General:
 - Threading/async
 - Better emscripten support
     - Streaming files
-    - Get requestAnimationFrame to actually work
 - Fix the memory leak
 
 Rendering:
-- Lighting
+- Lighting (DONE - requires tweaking)
 - Culling
 - More optimisations in general
 
@@ -21,4 +20,3 @@ Other:
 - Store images as .farc files, rather than slow image files like png
 - Physics
 - Animation (skeletal)
-
