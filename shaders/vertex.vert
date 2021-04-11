@@ -21,12 +21,14 @@ void main()
     gl_Position = model_view_projection * vec4(pos, 1.0f);
     tex_coord = tex;
     // normal = normalize(model_view * vec4(norm, 1.0f));
-    normal = vec4(normalize(norm), 1.0f);
+    // normal = vec4(normalize(norm), 1.0f);
+    normal = normalize(model * vec4(norm, 0.0));
     world_pos = model * vec4(pos, 1.0f);
 
     // Tangents
     vec3 T = normalize(vec3(model * vec4(tang, 0.0)));
     vec3 B = normalize(vec3(model * vec4(bitang, 0.0)));
-    vec3 N = normalize(vec3(model * vec4(norm, 0.0)));
+    // vec3 N = normalize(vec3(model * vec4(norm, 0.0)));
+    vec3 N = vec3(normal);
     tbn = mat3(T, B, N);
 }

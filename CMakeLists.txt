@@ -97,3 +97,16 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 # add_subdirectory(Flux/FluxGTK/FluxEngine/ThirdParty/glfw)
 target_link_libraries(PhysicsPlayground PUBLIC glfw)
 target_link_libraries(PhysicsPlayground PUBLIC FluxEngine)
+
+# ============================================================
+# Perf Playground
+# ============================================================
+# Big hack
+add_executable(PerfPlayground Src/Playground/PerfPlayground.cc Flux/FluxGTK/FluxEngine/Src/OpenGL/GLFW/GLFW.cc)
+# GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# add_subdirectory(Flux/FluxGTK/FluxEngine/ThirdParty/glfw)
+target_link_libraries(PerfPlayground PUBLIC glfw)
+target_link_libraries(PerfPlayground PUBLIC FluxEngine)

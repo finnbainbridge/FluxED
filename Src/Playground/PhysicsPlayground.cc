@@ -1,3 +1,4 @@
+#include "Flux/Debug.hh"
 #include "Flux/Physics.hh"
 #include "FluxArc/FluxArc.hh"
 #include <cstdio>
@@ -15,7 +16,6 @@
 #include "Flux/Input.hh"
 #include "glm/fwd.hpp"
 
-
 Flux::ECSCtx ctx;
 
 Flux::EntityRef quad;
@@ -31,6 +31,8 @@ Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes> mat_res;
 
 std::vector<Flux::EntityRef> meshes;
 
+Flux::EntityRef shapes[3];
+
 void init(int argc, char** argv) {
     
     ctx = Flux::ECSCtx();
@@ -40,32 +42,27 @@ void init(int argc, char** argv) {
     cube_stick = ctx.createEntity();
     Flux::Transform::giveTransform(cube_stick);
 
-    for (int x = -24; x < 24; x+=4)
-    {
-        for (int y = -24; y < 24; y+=4)
-        {
-            for (int z = -24; z < 24; z+=4)
-            {
-                auto loader = Flux::Resources::deserialize("Presets/DefaultCube.farc");
-                auto ens = loader->addToECS(&ctx);
+    auto loader = Flux::Resources::deserialize("assets/Shapes.farc");
+    auto ens = loader->addToECS(&ctx);
 
-                for (auto i : ens)
-                {
-                    if (i.hasComponent<Flux::Renderer::MeshCom>())
-                    {
-                        // Flux::Physics::giveBoundingBox(i);
-                        c ++;
-                        meshes.push_back(i);
-                        Flux::Transform::removeParent(i);
-                        Flux::Transform::setParent(i, cube_stick);
-                        Flux::Transform::translate(i, glm::vec3(x, y, z));
-                    }
-                    else
-                    {
-                        ctx.destroyEntity(i);
-                    }
-                }
-            }
+    int pos = -4;
+    for (auto i : ens)
+    {
+        if (i.hasComponent<Flux::Renderer::MeshCom>())
+        {
+            // Flux::Physics::giveBoundingBox(i);
+            Flux::Physics::giveConvexCollider(i);
+            shapes[c] = i;
+            c ++;
+            meshes.push_back(i);
+            Flux::Transform::removeParent(i);
+            Flux::Transform::setParent(i, cube_stick);
+            Flux::Transform::translate(i, glm::vec3(pos, 0, 0));
+            pos += 4;
+        }
+        else
+        {
+            ctx.destroyEntity(i);
         }
     }
 
@@ -103,13 +100,65 @@ void init(int argc, char** argv) {
     LOG_INFO("Added GL Renderer");
     Flux::Transform::addTransformSystems(&ctx);
     LOG_INFO("Added transform systems");
+
+    Flux::Debug::enableDebugDraw(&ctx);
 }
 
 void loop(float delta)
 {
-    Flux::Transform::rotate(cube_stick, glm::vec3(0, 1, 0), 0.5 * delta);
+    // Flux::Transform::rotate(cube_stick, glm::vec3(0, 1, 0), 0.5 * delta);
+
+    if (Flux::Input::isKeyPressed(FLUX_KEY_LEFT))
+    {
+        Flux::Transform::translate(shapes[0], glm::vec3(-5 * delta, 0, 0));
+    }
+
+    if (Flux::Input::isKeyPressed(FLUX_KEY_RIGHT))
+    {
+        Flux::Transform::translate(shapes[0], glm::vec3(5 * delta, 0, 0));
+    }
+
+    if (Flux::Input::isKeyPressed(FLUX_KEY_UP))
+    {
+        Flux::Transform::translate(shapes[0], glm::vec3(0, 5 * delta, 0));
+    }
+
+    if (Flux::Input::isKeyPressed(FLUX_KEY_DOWN))
+    {
+        Flux::Transform::translate(shapes[0], glm::vec3(0, -5 * delta, 0));
+    }
+
+    {
+        // auto cc = shapes[0].getComponent<Flux::Physics::ColliderCom>();
+        auto collisions = Flux::Physics::getCollisions(shapes[0]);
+        if (collisions.size() > 0)
+        {
+            Flux::Renderer::setUniform(shapes[0].getComponent<Flux::Renderer::MeshCom>()->mat_resource, "color", glm::vec3(1, 0, 0));
+            // LOG_INFO("Hitting");
+
+            // Show collision information
+            auto data = collisions[0];
+            auto endpoint = (glm::vec3(0, 5, 0) + data.normal) * data.depth;
+            // Flux::Debug::drawLine(glm::vec3(0, 5, 0), endpoint, Flux::Debug::Colors::Purple);
+            // Flux::Debug::drawPoint(endpoint, 0.15, Flux::Debug::Colors::Purple);
+
+            // if (Flux::Input::isKeyPressed(FLUX_KEY_SPACE))
+            // {
+            Flux::Transform::translate(shapes[0], data.normal * data.depth);
+            // }
+        }
+        else
+        {
+            Flux::Renderer::setUniform(shapes[0].getComponent<Flux::Renderer::MeshCom>()->mat_resource, "color", glm::vec3(0, 1, 0));
+            // LOG_INFO("Not");
+        }
+    }
+
+    // Flux::Debug::drawPoint(glm::vec3(0, 1.5, 0), 1, Flux::Debug::Colors::Red, true);
+    // Flux::Debug::drawLine(glm::vec3(10, 2, 0), glm::vec3(-10, 2, 0), Flux::Debug::Colors::Purple);
 
     ctx.runSystems(delta);
+    Flux::Debug::run(delta);
 }
 
 void end()

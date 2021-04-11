@@ -95,11 +95,11 @@ void init(int argc, char** argv) {
             {
                 if (i.hasComponent<Flux::Renderer::MeshCom>())
                 {
-                    Flux::Physics::giveBoundingBox(i);
+                    // Flux::Physics::giveBoundingBox(i);
                     c ++;
                     // meshes.push_back(i);
-                    // auto dent = ctx.createEntity();
-                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                    auto dent = ctx.createEntity();
+                    i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
                 }
             }
         }
@@ -116,8 +116,8 @@ void init(int argc, char** argv) {
                     // Flux::Physics::giveBoundingBox(i);
                     c ++;
                     // meshes.push_back(i);
-                    // auto dent = ctx.createEntity();
-                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                    auto dent = ctx.createEntity();
+                    i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
                 }
             }
         }
@@ -131,11 +131,11 @@ void init(int argc, char** argv) {
             {
                 if (i.hasComponent<Flux::Renderer::MeshCom>())
                 {
-                    Flux::Physics::giveBoundingBox(i);
+                    // Flux::Physics::giveBoundingBox(i);
                     c ++;
                     // meshes.push_back(i);
-                    // auto dent = ctx.createEntity();
-                    // i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
+                    auto dent = ctx.createEntity();
+                    i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
                 }
             }
         }
@@ -169,11 +169,13 @@ void init(int argc, char** argv) {
 
     Flux::Transform::setParent(light, light_stick);
 
-    // Flux::Renderer::addPointLight(light, 30, glm::vec3(1, 1, 1));
+    // Flux::Renderer::addPointLight(camera, 30, glm::vec3(1, 1, 1));
+    Flux::Renderer::addSpotLight(camera, glm::radians(20.0f), 9999, glm::vec3(1, 1, 1));
+
+    auto dent = ctx.createEntity();
+    camera.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(dent);
 
     // Flux::Renderer::addDirectionalLight(camera, glm::vec3(-0.2,1,-0.3), 9999, glm::vec3(1, 1, 1));
-
-    Flux::Renderer::addSpotLight(camera, glm::radians(20.0f), 9999, glm::vec3(1, 1, 1));
 
     // auto o2 = glm::vec3(0,0,0);
     // Flux::Transform::translate(quad, o2);
