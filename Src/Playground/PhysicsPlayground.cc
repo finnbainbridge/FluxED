@@ -2,6 +2,7 @@
 #include "Flux/Physics.hh"
 #include "FluxArc/FluxArc.hh"
 #include "glm/detail/func_common.hpp"
+#include "glm/detail/type_vec.hpp"
 #include <cstdio>
 #include <cstdlib>
 #define GLM_FORCE_CTOR_INIT
@@ -33,6 +34,11 @@ Flux::Resources::ResourceRef<Flux::Renderer::MaterialRes> mat_res;
 std::vector<Flux::EntityRef> meshes;
 
 // Flux::EntityRef shapes[3];
+
+float randomFloat(int max)
+{
+    return float(rand())/float((RAND_MAX)) * max;
+}
 
 void init(int argc, char** argv) {
     
@@ -76,6 +82,51 @@ void init(int argc, char** argv) {
         }
     }
 
+    srand(time(NULL));
+
+    for (int x = -8; x < 8; x+=4)
+    {
+        for (int y = -8; y < 8; y+=4)
+        {
+            for (int z = -8; z < 8; z+=4)
+            {
+                auto loader = Flux::Resources::deserialize("Presets/DefaultCube.farc");
+                auto ens = loader->addToECS(&ctx);
+
+                for (auto i : ens)
+                {
+                    if (i.hasComponent<Flux::Renderer::MeshCom>())
+                    {
+                        // Flux::Physics::giveBoundingBox(i);
+                        Flux::Physics::giveConvexCollider(i);
+                        c ++;
+                        meshes.push_back(i);
+                        Flux::Transform::removeParent(i);
+                        Flux::Transform::setParent(i, cube_stick);
+                        Flux::Transform::translate(i, glm::vec3(x, y, z));
+
+                        // auto rc = new Flux::Physics::RigidCom;
+                        // rc->linear = glm::vec3(rand() % 4, -1.81, rand() % 4);
+                        // rc->angular = glm::vec3(1.0, 1.0, 1.0);
+                        // rc->mass = 1;
+                        // rc->velocity = glm::vec3();
+
+                        // i.addComponent(rc);
+                        Flux::Physics::giveRigidBody(i, 1);
+                        // auto rc = i.getComponent<Flux::Physics::RigidCom>();
+                        // rc->force = glm::vec3(0, -0.001, 0);
+                        // rc->torque = glm::vec3(0.001, 0, 0.001);
+                        Flux::Physics::addForce(i, glm::vec3(x+randomFloat(1), y+randomFloat(1), z+randomFloat(1)), glm::vec3(randomFloat(100), +randomFloat(100), +randomFloat(100)));
+                    }
+                    else
+                    {
+                        ctx.destroyEntity(i);
+                    }
+                }
+            }
+        }
+    }
+
     std::cout << "Added bounding box: " << c << "\n";
 
     camera = ctx.createEntity();
@@ -85,7 +136,7 @@ void init(int argc, char** argv) {
     // Flux::Transform::giveTransform(camera_stick);
 
     Flux::Transform::setCamera(camera);
-    auto o = glm::vec3(0,0,10);
+    auto o = glm::vec3(0,0,20);
     Flux::Transform::translate(camera, o);
     LOG_INFO("Setup camera");
 
