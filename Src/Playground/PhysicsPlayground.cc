@@ -23,6 +23,7 @@ Flux::ECSCtx ctx;
 Flux::EntityRef player;
 Flux::EntityRef camera;
 Flux::EntityRef cube_stick;
+Flux::EntityRef physics_object;
 
 Flux::EntityRef light;
 Flux::EntityRef light_stick;
@@ -35,13 +36,55 @@ std::vector<Flux::EntityRef> meshes;
 
 // Flux::EntityRef shapes[3];
 
-float randomFloat(int max)
+float randomFloat(float max)
 {
     return float(rand())/float((RAND_MAX)) * max;
 }
 
-void init(int argc, char** argv) {
-    
+Flux::EntityRef createPhysicsCube()
+{
+    auto loader = Flux::Resources::deserialize("Presets/DefaultCube.farc");
+    auto ens = loader->addToECS(&ctx);
+
+    Flux::EntityRef phhysics_object;
+
+    for (auto i : ens)
+    {
+        if (i.hasComponent<Flux::Renderer::MeshCom>())
+        {
+            // Flux::Physics::giveBoundingBox(i);
+            Flux::Physics::giveConvexCollider(i);
+            meshes.push_back(i);
+            Flux::Transform::removeParent(i);
+            // Flux::Transform::setParent(i, cube_stick);
+            Flux::Transform::translate(i, glm::vec3(-3, 9, 0));
+
+            // auto rc = new Flux::Physics::RigidCom;
+            // rc->linear = glm::vec3(rand() % 4, -1.81, rand() % 4);
+            // rc->angular = glm::vec3(1.0, 1.0, 1.0);
+            // rc->mass = 1;
+            // rc->velocity = glm::vec3();
+
+            // i.addComponent(rc);
+            Flux::Physics::giveRigidBody(i, 80);
+            // auto rc = i.getComponent<Flux::Physics::RigidCom>();
+            // rc->force = glm::vec3(0, -0.001, 0);
+            // rc->torque = glm::vec3(0.001, 0, 0.001);
+            Flux::Physics::addForce(i, glm::vec3(0, 0, 0), glm::vec3(0, -1, 0));
+            phhysics_object = i;
+        }
+        else
+        {
+            ctx.destroyEntity(i);
+        }
+    }
+    return phhysics_object;
+}
+
+
+void init(int argc, char** argv)
+{
+
     ctx = Flux::ECSCtx();
 
     int c = 0;
@@ -69,6 +112,7 @@ void init(int argc, char** argv) {
             auto entity = ctx.createEntity();
             i.getComponent<Flux::Physics::BoundingCom>()->box->setDisplayEntity(entity);
             pos += 4;
+            
         }
         else
         {
@@ -84,48 +128,50 @@ void init(int argc, char** argv) {
 
     srand(time(NULL));
 
-    for (int x = -8; x < 8; x+=4)
-    {
-        for (int y = -8; y < 8; y+=4)
-        {
-            for (int z = -8; z < 8; z+=4)
-            {
-                auto loader = Flux::Resources::deserialize("Presets/DefaultCube.farc");
-                auto ens = loader->addToECS(&ctx);
+    // for (int x = -8; x < 8; x+=4)
+    // {
+    //     for (int y = -8; y < 8; y+=4)
+    //     {
+    //         for (int z = -8; z < 8; z+=4)
+    //         {
+    //             auto loader = Flux::Resources::deserialize("Presets/DefaultCube.farc");
+    //             auto ens = loader->addToECS(&ctx);
 
-                for (auto i : ens)
-                {
-                    if (i.hasComponent<Flux::Renderer::MeshCom>())
-                    {
-                        // Flux::Physics::giveBoundingBox(i);
-                        Flux::Physics::giveConvexCollider(i);
-                        c ++;
-                        meshes.push_back(i);
-                        Flux::Transform::removeParent(i);
-                        Flux::Transform::setParent(i, cube_stick);
-                        Flux::Transform::translate(i, glm::vec3(x, y, z));
+    //             for (auto i : ens)
+    //             {
+    //                 if (i.hasComponent<Flux::Renderer::MeshCom>())
+    //                 {
+    //                     // Flux::Physics::giveBoundingBox(i);
+    //                     Flux::Physics::giveConvexCollider(i);
+    //                     c ++;
+    //                     meshes.push_back(i);
+    //                     Flux::Transform::removeParent(i);
+    //                     Flux::Transform::setParent(i, cube_stick);
+    //                     Flux::Transform::translate(i, glm::vec3(x, y, z));
 
-                        // auto rc = new Flux::Physics::RigidCom;
-                        // rc->linear = glm::vec3(rand() % 4, -1.81, rand() % 4);
-                        // rc->angular = glm::vec3(1.0, 1.0, 1.0);
-                        // rc->mass = 1;
-                        // rc->velocity = glm::vec3();
+    //                     // auto rc = new Flux::Physics::RigidCom;
+    //                     // rc->linear = glm::vec3(rand() % 4, -1.81, rand() % 4);
+    //                     // rc->angular = glm::vec3(1.0, 1.0, 1.0);
+    //                     // rc->mass = 1;
+    //                     // rc->velocity = glm::vec3();
 
-                        // i.addComponent(rc);
-                        Flux::Physics::giveRigidBody(i, 1);
-                        // auto rc = i.getComponent<Flux::Physics::RigidCom>();
-                        // rc->force = glm::vec3(0, -0.001, 0);
-                        // rc->torque = glm::vec3(0.001, 0, 0.001);
-                        Flux::Physics::addForce(i, glm::vec3(x+randomFloat(1), y+randomFloat(1), z+randomFloat(1)), glm::vec3(randomFloat(100), +randomFloat(100), +randomFloat(100)));
-                    }
-                    else
-                    {
-                        ctx.destroyEntity(i);
-                    }
-                }
-            }
-        }
-    }
+    //                     // i.addComponent(rc);
+    //                     Flux::Physics::giveRigidBody(i, 1);
+    //                     // auto rc = i.getComponent<Flux::Physics::RigidCom>();
+    //                     // rc->force = glm::vec3(0, -0.001, 0);
+    //                     // rc->torque = glm::vec3(0.001, 0, 0.001);
+    //                     Flux::Physics::addForce(i, glm::vec3(x+randomFloat(0.25f), y+randomFloat(0.25f), z+randomFloat(0.25f)), glm::vec3(randomFloat(100), +randomFloat(100), +randomFloat(100)));
+    //                 }
+    //                 else
+    //                 {
+    //                     ctx.destroyEntity(i);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    physics_object = createPhysicsCube();
 
     std::cout << "Added bounding box: " << c << "\n";
 
@@ -183,12 +229,12 @@ void loop(float delta)
     if (Flux::Input::isKeyPressed(FLUX_KEY_LEFT))
     {
         // Flux::Physics::move(player, glm::vec3(-5 * delta, -8 * delta, 0));
-        velocity.x = -5;
+        velocity.x = -8;
     }
     else if (Flux::Input::isKeyPressed(FLUX_KEY_RIGHT))
     {
         // Flux::Physics::move(player, glm::vec3(5 * delta, -8 * delta, 0));
-        velocity.x = 5;
+        velocity.x = 8;
     }
     else
     {
@@ -203,7 +249,23 @@ void loop(float delta)
     // velocity.y -= 8;
     // velocity.y = glm::min(-8.0f, velocity.y);
 
-    auto out = Flux::Physics::move(player, velocity * delta);
+    // auto out = Flux::Physics::move(player, velocity * delta);
+    // Translate it initially
+    Flux::Transform::translate(player, velocity * delta);
+
+    // Check for collisions
+    auto out = Flux::Physics::getCollisions(player);
+
+    // "Solve" collisions
+    for (auto i : out)
+    {
+        if (i.entity == physics_object)
+        {
+            continue;
+        }
+        Flux::Transform::globalTranslate(player, glm::vec3(0, (i.normal * i.depth).y, 0));
+    }
+
     if (out.size() > 0)
     {
         // Check collision vector
@@ -241,7 +303,15 @@ void loop(float delta)
 
         on_ground = false;
     }
+
+    // if (Flux::Input::isKeyPressed(FLUX_KEY_R))
+    // {
+    //     auto t = Flux::Transform::getTranslation(physics_object);
+    //     printf("%f, %f, %f \n", t.x, t.y, t.z);
+    // }
     // std::cout << out.size() << "\n";
+
+    // Flux::Physics::addForce(physics_object, glm::vec3(-3, 8, 0), glm::vec3(0, -1, 0));
 
     ctx.runSystems(delta);
     Flux::Debug::run(delta);
